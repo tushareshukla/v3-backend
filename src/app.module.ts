@@ -1,37 +1,21 @@
 import { Module } from '@nestjs/common';
-import { UsersModule } from './users/users.module';
-import { AuthModule } from './auth/auth.module';
+import path from 'path';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { I18nModule, HeaderResolver } from 'nestjs-i18n';
+import { MongooseModule } from '@nestjs/mongoose';
+
 import databaseConfig from './database/config/database.config';
 import authConfig from './auth/config/auth.config';
 import appConfig from './config/app.config';
 import mailConfig from './mail/config/mail.config';
-import path from 'path';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { HeaderResolver, I18nModule } from 'nestjs-i18n';
+import { MongooseConfigService } from './database/mongoose-config.service';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { HomeModule } from './home/home.module';
-import { DataSource, DataSourceOptions } from 'typeorm';
-import { AllConfigType } from './config/config.type';
 import { SessionModule } from './session/session.module';
 import { MailerModule } from './mailer/mailer.module';
-import { MongooseModule } from '@nestjs/mongoose';
-import { MongooseConfigService } from './database/mongoose-config.service';
-import { DatabaseConfig } from './database/config/database-config.type';
-
-// <database-block>
-const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig)
-  .isDocumentDatabase
-  ? MongooseModule.forRootAsync({
-      useClass: MongooseConfigService,
-    })
-  : TypeOrmModule.forRootAsync({
-      useClass: TypeOrmConfigService,
-      dataSourceFactory: async (options: DataSourceOptions) => {
-        return new DataSource(options).initialize();
-      },
-    });
-// </database-block>
+import { AllConfigType } from './config/config.type';
 
 @Module({
   imports: [
@@ -40,7 +24,11 @@ const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig)
       load: [databaseConfig, authConfig, appConfig, mailConfig],
       envFilePath: ['.env'],
     }),
-    infrastructureDatabaseModule,
+    // MongoDB (Mongoose) connection
+    MongooseModule.forRootAsync({
+      useClass: MongooseConfigService,
+      imports: [ConfigModule],
+    }),
     I18nModule.forRootAsync({
       useFactory: (configService: ConfigService<AllConfigType>) => ({
         fallbackLanguage: configService.getOrThrow('app.fallbackLanguage', {
@@ -51,13 +39,9 @@ const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig)
       resolvers: [
         {
           use: HeaderResolver,
-          useFactory: (configService: ConfigService<AllConfigType>) => {
-            return [
-              configService.get('app.headerLanguage', {
-                infer: true,
-              }),
-            ];
-          },
+          useFactory: (configService: ConfigService<AllConfigType>) => [
+            configService.get('app.headerLanguage', { infer: true }),
+          ],
           inject: [ConfigService],
         },
       ],
@@ -65,7 +49,6 @@ const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig)
       inject: [ConfigService],
     }),
     UsersModule,
-    FilesModule,
     AuthModule,
     SessionModule,
     MailModule,
