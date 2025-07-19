@@ -5,15 +5,11 @@ import { I18nModule, HeaderResolver } from 'nestjs-i18n';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import databaseConfig from './database/config/database.config';
-import authConfig from './auth/config/auth.config';
 import appConfig from './config/app.config';
 import mailConfig from './mail/config/mail.config';
 import { MongooseConfigService } from './database/mongoose-config.service';
-import { UsersModule } from './users/users.module';
-import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { HomeModule } from './home/home.module';
-import { SessionModule } from './session/session.module';
 import { MailerModule } from './mailer/mailer.module';
 import { AllConfigType } from './config/config.type';
 
@@ -21,7 +17,7 @@ import { AllConfigType } from './config/config.type';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, authConfig, appConfig, mailConfig],
+      load: [databaseConfig, appConfig, mailConfig],
       envFilePath: ['.env'],
     }),
     // MongoDB (Mongoose) connection
@@ -48,9 +44,6 @@ import { AllConfigType } from './config/config.type';
       imports: [ConfigModule],
       inject: [ConfigService],
     }),
-    UsersModule,
-    AuthModule,
-    SessionModule,
     MailModule,
     MailerModule,
     HomeModule,
