@@ -24,12 +24,11 @@ export class User {
   @Prop({ type: Types.ObjectId, ref: 'Organization', required: true })
   organization: Types.ObjectId;
 
-  @Prop({
-    type: String,
-    enum: ['admin', 'member', 'viewer', 'campaignmanager'],
-    default: 'campaignmanager',
-  })
-  role: string;
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Product' }], default: [] })
+  products: Types.ObjectId[];
+
+  @Prop({ type: Types.ObjectId, ref: 'Role', required: true })
+  role: Types.ObjectId;
 
   @Prop({ default: false })
   verified: boolean;
